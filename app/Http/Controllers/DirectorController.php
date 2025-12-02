@@ -4,190 +4,58 @@ namespace App\Http\Controllers;
 
 use App\Models\Director;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class DirectorController extends Controller
 {
-      /**
- * @api {get} /actors Get all actors
- * @apiName GetActors
- * @apiGroup Actors
- * @apiVersion 1.0.0
- *
- * @apiSuccessExample {json} Success:
- * HTTP/1.1 200 OK
- * {
- *   "products": [
- *      {
- *         "id": 1,
- *         "name": "Tom Cruise"
- *      }
- *   ]
- * }
- */
-
+    // GET /api/directors
     public function index()
     {
-        //$directors = Director::paginate(12);
-        //return view('directors.index', compact('directors'));
+        $directors = Director::all();
 
-
-        $director = Director::all();
-        return response()->json([
-            'director' => $director,
-        ]);
+        return response()->json($directors, 200);
     }
 
-    /**
-     * Show form for creating a new director.
-     */
-    public function create()
+    // POST /api/directors
+    public function store(Request $request)
     {
-        return view('directors.create');
-    }
-
-/**
- * @api {post} /actors Create new actor
- * @apiName CreateActor
- * @apiGroup Actors
- * @apiVersion 1.0.0
- *
- * @apiParam {String} name Actor name
- * @apiParam {String} [description] Actor description
- *
- * @apiSuccessExample {json} Success:
- * HTTP/1.1 200 OK
- * {
- *   "actor": {
- *      "id": 10,
- *      "name": "New Actor"
- *   }
- * }
- */
-    public function store(DirectorRequest $request)
-    {
-
-        /*
-        $request->validate([
-            'name'        => 'required|string|max:255',
-            'image'       => 'nullable|image|max:2048', // max 2 MB
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
         ]);
 
-        */
+        $director = Director::create($validated);
 
-        $director = Director::create($request->all());
-        return response()->json(['director' => $director]);
+        return response()->json($director, 201);
+    }
 
+    // PATCH /api/directors/{id}
+    public function update(Request $request, $id)
+    {
+        $director = Director::find($id);
 
-
-
-        $director = new Director();
-        $director->name = $request->name;
-
-        if ($request->hasFile('image')) {
-            $director->image = $request->file('image')->store('directors', 'public');
+        if (!$director) {
+            return response()->json(['message' => 'Not found!'], 404);
         }
 
-        $director->save();
-
-        return redirect()->route('directors.index')->with('success', 'Director created successfully!');
-    }
-
-    /**
-     * Display the specified director.
-     */
-    public function show(Director $director)
-    {
-        return view('directors.show', compact('director'));
-    }
-
-    /**
-     * Show the form for editing the specified director.
-     */
-    public function edit(Director $director)
-    {
-        return view('directors.edit', compact('director'));
-    }
-
-   
-/**
- * @api {put} /actors/:id Update actor
- * @apiName UpdateActor
- * @apiGroup Actors
- * @apiVersion 1.0.0
- *
- * @apiParam {Number} id Actor ID
- *
- * @apiSuccessExample {json} Success:
- * HTTP/1.1 200 OK
- * {
- *   "actor": {
- *      "id": 3,
- *      "name": "Updated Name"
- *   }
- * }
- */
-    public function update(DirectorRequest $request, Director $director,$id)
-    {
-       
-       /*
-       
-        $request->validate([
-            'name'        => 'required|string|max:255',
-            'image'       => 'nullable|image|max:2048',
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
         ]);
-        */
 
-         $director = Director::findOrFail($id);
-        $director->update($request->all());
-        return response()->json(['director' => $director]);
+        $director->update($validated);
 
-
-
-        $director->name = $request->name;
-
-        if ($request->hasFile('image')) {
-            if ($director->image) {
-                Storage::disk('public')->delete($director->image);
-            }
-            $director->image = $request->file('image')->store('directors', 'public');
-        }
-
-        $director->save();
-
-        return redirect()->route('directors.index')->with('success', 'Director updated successfully!');
+        return response()->json($director, 200);
     }
 
-    
-/**
- * @api {delete} /actors/:id Delete actor
- * @apiName DeleteActor
- * @apiGroup Actors
- * @apiVersion 1.0.0
- *
- * @apiParam {Number} id Actor ID
- *
- * @apiSuccessExample {json} Success:
- * HTTP/1.1 200 OK
- * {
- *   "message": "Actor deleted successfully."
- * }
- */
-    public function destroy(Director $director)
+    // DELETE /api/directors/{id}
+    public function destroy($id)
     {
-        if ($director->image) {
-            Storage::disk('public')->delete($director->image);
+        $director = Director::find($id);
+
+        if (!$director) {
+            return response()->json(['message' => 'Not found!'], 404);
         }
 
         $director->delete();
 
-        return redirect()->route('directors.index')->with('success', 'Director deleted successfully!');
-
-
-       
-        $director = Director::findOrFail($id);
-        $director->delete();
-
-        return response()->json(['message' => 'Director deleted successfully.', 'id' => $id]);
+        return response()->json(['message' => 'Deleted'], 410);
     }
 }

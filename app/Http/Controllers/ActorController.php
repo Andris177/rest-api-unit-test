@@ -4,208 +4,72 @@ namespace App\Http\Controllers;
 
 use App\Models\Actor;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class ActorController extends Controller
 {
-    /**
- * @api {get} /actors Get all actors
- * @apiName GetActors
- * @apiGroup Actors
- * @apiVersion 1.0.0
- *
- * @apiSuccessExample {json} Success:
- * HTTP/1.1 200 OK
- * {
- *   "products": [
- *      {
- *         "id": 1,
- *         "name": "Tom Cruise"
- *      }
- *   ]
- * }
- */
-
-
-    public function index()
+    // GET /api/actors[?needle=...]
+    public function index(Request $request)
     {
-        //$actors = Actor::paginate(12);
-        //return view('actors.index', compact('actors'));
+        $query = Actor::query();
 
-
-        $actors = Actor::all();
-        return response()->json([
-            'products' => $actors,
-        ]);
-    }
-
-    public function create()
-    {
-        return view('actors.create');
-    }
-
-
-
-/**
- * @api {post} /actors Create new actor
- * @apiName CreateActor
- * @apiGroup Actors
- * @apiVersion 1.0.0
- *
- * @apiParam {String} name Actor name
- * @apiParam {String} [description] Actor description
- *
- * @apiSuccessExample {json} Success:
- * HTTP/1.1 200 OK
- * {
- *   "actor": {
- *      "id": 10,
- *      "name": "New Actor"
- *   }
- * }
- */
-
-
-
-    public function store(ActorRequest $request)
-    {
-        /*
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'birth_date' => 'nullable|date',
-            'gender' => 'nullable|in:férfi,nő,egyéb',
-            'image' => 'nullable|image|max:2048',
-        ]);
-
-        */
-
-        $actor = Actor::create($request->all());
-        return response()->json(['actor' => $actor]);
-
-
-
-        $actor = new Actor();
-        $actor->name = $request->name;
-        $actor->description = $request->description;
-        $actor->birth_date = $request->birth_date;
-        $actor->gender = $request->gender;
-
-        if ($request->hasFile('image')) {
-            $actor->image = $request->file('image')->store('actors', 'public');
+        if ($needle = $request->query('needle')) {
+            $query->where('name', 'like', '%' . $needle . '%');
         }
 
-        $actor->save();
+        $actors = $query->get();
 
-        return redirect()->route('actors.index')->with('success', 'Actor created successfully!');
+        return response()->json($actors, 200);
     }
 
-    public function show(Actor $actor)
+    // POST /api/actors
+    public function store(Request $request)
     {
-        return view('actors.show', compact('actor'));
-    }
-
-    public function edit(Actor $actor)
-    {
-        return view('actors.edit', compact('actor'));
-    }
-
-
-
-/**
- * @api {put} /actors/:id Update actor
- * @apiName UpdateActor
- * @apiGroup Actors
- * @apiVersion 1.0.0
- *
- * @apiParam {Number} id Actor ID
- *
- * @apiSuccessExample {json} Success:
- * HTTP/1.1 200 OK
- * {
- *   "actor": {
- *      "id": 3,
- *      "name": "Updated Name"
- *   }
- * }
- */
-
-
-
-
-    public function update(ActorRequest $request, Actor $actor, $id)
-    {
-        
-        /*
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'birth_date' => 'nullable|date',
-            'gender' => 'nullable|in:férfi,nő,egyéb',
-            'image' => 'nullable|image|max:2048',
+        $validated = $request->validate([
+            'name'        => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'birth_date'  => ['nullable', 'date'],
+            'gender'      => ['required', 'string', 'max:10'],
+            'image'       => ['nullable', 'string'],
         ]);
-        
 
-        */
-        $actor = Actor::findOrFail($id);
-        $actor->update($request->all());
-        return response()->json(['actor' => $actor]);
+        $actor = Actor::create($validated);
 
+        return response()->json($actor, 201);
+    }
 
+    // PATCH /api/actors/{id}
+    public function update(Request $request, $id)
+    {
+        $actor = Actor::find($id);
 
-
-        $actor->name = $request->name;
-        $actor->description = $request->description;
-        $actor->birth_date = $request->birth_date;
-        $actor->gender = $request->gender;
-
-        if ($request->hasFile('image')) {
-            if ($actor->image) {
-                Storage::disk('public')->delete($actor->image);
-            }
-            $actor->image = $request->file('image')->store('actors', 'public');
+        if (!$actor) {
+            return response()->json(['message' => 'Not found!'], 404);
         }
 
-        $actor->save();
+        $validated = $request->validate([
+            'name'        => ['sometimes', 'required', 'string', 'max:255'],
+            'description' => ['sometimes', 'nullable', 'string'],
+            'birth_date'  => ['sometimes', 'nullable', 'date'],
+            'gender'      => ['sometimes', 'required', 'string', 'max:10'],
+            'image'       => ['sometimes', 'nullable', 'string'],
+        ]);
 
-        return redirect()->route('actors.index')->with('success', 'Actor updated successfully!');
+        $actor->update($validated);
+
+        return response()->json($actor, 200);
     }
 
-
-
-
-/**
- * @api {delete} /actors/:id Delete actor
- * @apiName DeleteActor
- * @apiGroup Actors
- * @apiVersion 1.0.0
- *
- * @apiParam {Number} id Actor ID
- *
- * @apiSuccessExample {json} Success:
- * HTTP/1.1 200 OK
- * {
- *   "message": "Actor deleted successfully."
- * }
- */
-
-
-
-    public function destroy(Actor $actor)
+    // DELETE /api/actors/{id}
+    public function destroy($id)
     {
-        if ($actor->image) {
-            Storage::disk('public')->delete($actor->image);
+        $actor = Actor::find($id);
+
+        if (!$actor) {
+            return response()->json(['message' => 'Not found!'], 404);
         }
 
         $actor->delete();
 
-        return redirect()->route('actors.index')->with('success', 'Actor deleted successfully!');
-
-
-
-        $actor = Actor::findOrFail($id);
-        $actor->delete();
-
-        return response()->json(['message' => 'Actor deleted successfully.', 'id' => $id]);
+        return response()->json(['message' => 'Deleted'], 410);
     }
 }

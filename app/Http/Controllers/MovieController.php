@@ -3,209 +3,74 @@
 namespace App\Http\Controllers;
 
 use App\Models\Movie;
-use App\Models\Director;
-use App\Models\Category;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class MovieController extends Controller
 {
-     /**
- * @api {get} /actors Get all actors
- * @apiName GetActors
- * @apiGroup Actors
- * @apiVersion 1.0.0
- *
- * @apiSuccessExample {json} Success:
- * HTTP/1.1 200 OK
- * {
- *   "products": [
- *      {
- *         "id": 1,
- *         "name": "Tom Cruise"
- *      }
- *   ]
- * }
- */
-
-    public function index()
+    // GET /api/movies[?needle=...]
+    public function index(Request $request)
     {
-        $movies = Movie::with(['director', 'category'])->paginate(12); // 12 film per page
-        return view('movies.index', compact('movies'));
-    }
+        $query = Movie::query();
 
-    /**
-     * Show the form for creating a new movie.
-     */
-    public function create()
-    {
-        $directors = Director::all();
-        $categories = Category::all();
-        return view('movies.create', compact('directors', 'categories'));
-    }
-
-    
-/**
- * @api {post} /actors Create new actor
- * @apiName CreateActor
- * @apiGroup Actors
- * @apiVersion 1.0.0
- *
- * @apiParam {String} name Actor name
- * @apiParam {String} [description] Actor description
- *
- * @apiSuccessExample {json} Success:
- * HTTP/1.1 200 OK
- * {
- *   "actor": {
- *      "id": 10,
- *      "name": "New Actor"
- *   }
- * }
- */
-    public function store(MovieRequest $request)
-    {
-
-        /*
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'director_id' => 'required|exists:directors,id',
-            'category_id' => 'required|exists:categories,id',
-            'cover_image' => 'nullable|image|max:2048', // max 2MB
-        ]);
-
-
-        */
-
-        $movie = new Movie();
-        $movie->title = $request->title;
-        $movie->description = $request->description;
-        $movie->director_id = $request->director_id;
-        $movie->category_id = $request->category_id;
-
-        if ($request->hasFile('cover_image')) {
-            $movie->cover_image = $request->file('cover_image')->store('films', 'public');
+        // ha szeretnél szűrést címre:
+        if ($needle = $request->query('needle')) {
+            $query->where('title', 'like', '%' . $needle . '%');
         }
 
-        $movie->save();
+        $movies = $query->get();
 
-        return redirect()->route('movies.index')->with('success', 'Movie created successfully!');
+        return response()->json($movies, 200);
     }
 
-    /**
-     * Display the specified movie.
-     */
-    public function show(Movie $movie)
+    // POST /api/movies
+    public function store(Request $request)
     {
-        $movie->load(['director', 'category', 'actors']);
-        return view('movies.show', compact('movie'));
-    }
-
-    /**
-     * Show the form for editing the specified movie.
-     */
-    public function edit(Movie $movie)
-    {
-        $directors = Director::all();
-        $categories = Category::all();
-        return view('movies.edit', compact('movie', 'directors', 'categories'));
-    }
-
-    
-/**
- * @api {put} /actors/:id Update actor
- * @apiName UpdateActor
- * @apiGroup Actors
- * @apiVersion 1.0.0
- *
- * @apiParam {Number} id Actor ID
- *
- * @apiSuccessExample {json} Success:
- * HTTP/1.1 200 OK
- * {
- *   "actor": {
- *      "id": 3,
- *      "name": "Updated Name"
- *   }
- * }
- */
-    public function update(MovieRequest $request, Movie $movie,$id)
-    {
-
-        /*
-
-
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'director_id' => 'required|exists:directors,id',
-            'category_id' => 'required|exists:categories,id',
-            'cover_image' => 'nullable|image|max:2048',
+        $validated = $request->validate([
+            'title'        => ['required', 'string', 'max:255'],
+            'description'  => ['nullable', 'string'],
+            'cover_image'  => ['nullable', 'string'],
+            'category_id'  => ['nullable', 'integer', 'exists:categories,id'],
+            'director_id'  => ['nullable', 'integer', 'exists:directors,id'],
         ]);
 
+        $movie = Movie::create($validated);
 
-
-        */
-
-        $movie->title = $request->title;
-        $movie->description = $request->description;
-        $movie->director_id = $request->director_id;
-        $movie->category_id = $request->category_id;
-
-        if ($request->hasFile('cover_image')) {
-            // Delete old image if exists
-            if ($movie->cover_image) {
-                Storage::disk('public')->delete($movie->cover_image);
-            }
-            $movie->cover_image = $request->file('cover_image')->store('films', 'public');
-        }
-
-        $movie->save();
-
-        return redirect()->route('movies.index')->with('success', 'Movie updated successfully!');
+        return response()->json($movie, 201);
     }
 
-    
-/**
- * @api {delete} /actors/:id Delete actor
- * @apiName DeleteActor
- * @apiGroup Actors
- * @apiVersion 1.0.0
- *
- * @apiParam {Number} id Actor ID
- *
- * @apiSuccessExample {json} Success:
- * HTTP/1.1 200 OK
- * {
- *   "message": "Actor deleted successfully."
- * }
- */
-    public function destroy(Movie $movie)
+    // PATCH /api/movies/{id}
+    public function update(Request $request, $id)
     {
-        if ($movie->cover_image) {
-            Storage::disk('public')->delete($movie->cover_image);
+        $movie = Movie::find($id);
+
+        if (!$movie) {
+            return response()->json(['message' => 'Not found!'], 404);
+        }
+
+        $validated = $request->validate([
+            'title'        => ['sometimes', 'required', 'string', 'max:255'],
+            'description'  => ['sometimes', 'nullable', 'string'],
+            'cover_image'  => ['sometimes', 'nullable', 'string'],
+            'category_id'  => ['sometimes', 'nullable', 'integer', 'exists:categories,id'],
+            'director_id'  => ['sometimes', 'nullable', 'integer', 'exists:directors,id'],
+        ]);
+
+        $movie->update($validated);
+
+        return response()->json($movie, 200);
+    }
+
+    // DELETE /api/movies/{id}
+    public function destroy($id)
+    {
+        $movie = Movie::find($id);
+
+        if (!$movie) {
+            return response()->json(['message' => 'Not found!'], 404);
         }
 
         $movie->delete();
 
-        return redirect()->route('movies.index')->with('success', 'Movie deleted successfully!');
-
-
-        
-        $movie = Movie::findOrFail($id);
-        $movie->delete();
-
-        return response()->json(['message' => 'Movie deleted successfully.', 'id' => $id]);
-
-    }
-
-    /**
-     * Display a gallery view of movies.
-     */
-    public function gallery()
-    {
-        $movies = Movie::with(['director', 'category'])->get();
-        return view('movies.gallery', compact('movies'));
+        return response()->json(['message' => 'Deleted'], 410);
     }
 }
