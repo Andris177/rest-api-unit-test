@@ -1,0 +1,32 @@
+meta {
+  name: add-actor
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://127.0.0.1:8000/api/actors
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+        "name": "Új actor",
+        "description": null,
+        "birth_date": "1999-01-01",
+        "gender": "nő",
+        "image": null
+  }
+    
+  
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

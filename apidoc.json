@@ -1,0 +1,7 @@
+{
+  "name": "Movies API",
+  "version": "1.0.0",
+  "description": "Actors, Directors and Movies REST API documentation",
+  "title": "Movies API",
+  "url": "http://localhost:8000/api"
+}

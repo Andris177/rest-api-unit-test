@@ -1,61 +1,44 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+{"id":"69421","variant":"standard","title":"Laravel REST API README Actors/Directors/Movies"}
+# Laravel REST API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+We do _not_ use default `SPA Authentication` https://laravel.com/docs/11.x/sanctum#spa-authentication
 
-## About Laravel
+## Endpoints
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+| URL           | HTTP method | Auth | JSON Response           |
+| ------------- | ----------- | ---- | ---------------------- |
+| /users/login  | POST        |      | user's token            |
+| /users        | GET         | Y    | all users               |
+| /actors       | GET         |      | all actors              |
+| /actors       | POST        | Y    | new actor added         |
+| /actors       | PATCH       | Y    | edited actor            |
+| /actors       | DELETE      | Y    | id                      |
+| /directors    | GET         |      | all directors           |
+| /directors    | POST        | Y    | new director added      |
+| /directors    | PATCH       | Y    | edited director         |
+| /directors    | DELETE      | Y    | id                      |
+| /movies       | GET         |      | all movies              |
+| /movies       | POST        | Y    | new movie added         |
+| /movies       | PATCH       | Y    | edited movie            |
+| /movies       | DELETE      | Y    | id                      |
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Steps
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
-
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-## Laravel Sponsors
-
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+1. `composer create-project laravel/laravel laravel-rest-api`
+2. `cd laravel-rest-api`
+3. `php artisan serve`
+4. Edit `.env`, set up mysql database
+5. `php artisan install:api` (if your package/setup requires it)
+6. Change User seed && `php artisan db:seed`
+7. `php artisan make:controller UsersController`
+8. `php artisan make:controller ActorsController`
+9. `php artisan make:controller DirectorsController`
+10. `php artisan make:controller MoviesController`
+11. `php artisan make:migration create_actors_table`
+12. `php artisan make:migration create_directors_table`
+13. `php artisan make:migration create_movies_table`
+14. `php artisan migrate`
+15. `php artisan make:request ActorRequest`
+16. `php artisan make:request DirectorRequest`
+17. `php artisan make:request MovieRequest`
+18. `php artisan config:publish cors`

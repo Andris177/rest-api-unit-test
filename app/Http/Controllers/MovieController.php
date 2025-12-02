@@ -10,9 +10,24 @@ use Illuminate\Support\Facades\Storage;
 
 class MovieController extends Controller
 {
-    /**
-     * Display a listing of the movies.
-     */
+     /**
+ * @api {get} /actors Get all actors
+ * @apiName GetActors
+ * @apiGroup Actors
+ * @apiVersion 1.0.0
+ *
+ * @apiSuccessExample {json} Success:
+ * HTTP/1.1 200 OK
+ * {
+ *   "products": [
+ *      {
+ *         "id": 1,
+ *         "name": "Tom Cruise"
+ *      }
+ *   ]
+ * }
+ */
+
     public function index()
     {
         $movies = Movie::with(['director', 'category'])->paginate(12); // 12 film per page
@@ -29,11 +44,29 @@ class MovieController extends Controller
         return view('movies.create', compact('directors', 'categories'));
     }
 
-    /**
-     * Store a newly created movie in storage.
-     */
-    public function store(Request $request)
+    
+/**
+ * @api {post} /actors Create new actor
+ * @apiName CreateActor
+ * @apiGroup Actors
+ * @apiVersion 1.0.0
+ *
+ * @apiParam {String} name Actor name
+ * @apiParam {String} [description] Actor description
+ *
+ * @apiSuccessExample {json} Success:
+ * HTTP/1.1 200 OK
+ * {
+ *   "actor": {
+ *      "id": 10,
+ *      "name": "New Actor"
+ *   }
+ * }
+ */
+    public function store(MovieRequest $request)
     {
+
+        /*
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -41,6 +74,9 @@ class MovieController extends Controller
             'category_id' => 'required|exists:categories,id',
             'cover_image' => 'nullable|image|max:2048', // max 2MB
         ]);
+
+
+        */
 
         $movie = new Movie();
         $movie->title = $request->title;
@@ -76,11 +112,30 @@ class MovieController extends Controller
         return view('movies.edit', compact('movie', 'directors', 'categories'));
     }
 
-    /**
-     * Update the specified movie in storage.
-     */
-    public function update(Request $request, Movie $movie)
+    
+/**
+ * @api {put} /actors/:id Update actor
+ * @apiName UpdateActor
+ * @apiGroup Actors
+ * @apiVersion 1.0.0
+ *
+ * @apiParam {Number} id Actor ID
+ *
+ * @apiSuccessExample {json} Success:
+ * HTTP/1.1 200 OK
+ * {
+ *   "actor": {
+ *      "id": 3,
+ *      "name": "Updated Name"
+ *   }
+ * }
+ */
+    public function update(MovieRequest $request, Movie $movie,$id)
     {
+
+        /*
+
+
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -88,6 +143,10 @@ class MovieController extends Controller
             'category_id' => 'required|exists:categories,id',
             'cover_image' => 'nullable|image|max:2048',
         ]);
+
+
+
+        */
 
         $movie->title = $request->title;
         $movie->description = $request->description;
@@ -107,9 +166,21 @@ class MovieController extends Controller
         return redirect()->route('movies.index')->with('success', 'Movie updated successfully!');
     }
 
-    /**
-     * Remove the specified movie from storage.
-     */
+    
+/**
+ * @api {delete} /actors/:id Delete actor
+ * @apiName DeleteActor
+ * @apiGroup Actors
+ * @apiVersion 1.0.0
+ *
+ * @apiParam {Number} id Actor ID
+ *
+ * @apiSuccessExample {json} Success:
+ * HTTP/1.1 200 OK
+ * {
+ *   "message": "Actor deleted successfully."
+ * }
+ */
     public function destroy(Movie $movie)
     {
         if ($movie->cover_image) {
@@ -119,6 +190,14 @@ class MovieController extends Controller
         $movie->delete();
 
         return redirect()->route('movies.index')->with('success', 'Movie deleted successfully!');
+
+
+        
+        $movie = Movie::findOrFail($id);
+        $movie->delete();
+
+        return response()->json(['message' => 'Movie deleted successfully.', 'id' => $id]);
+
     }
 
     /**
